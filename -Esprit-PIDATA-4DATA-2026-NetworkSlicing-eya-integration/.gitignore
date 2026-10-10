@@ -1,0 +1,11 @@
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.dll
+*.so
+*.joblib
+*.pkl
+node_modules/
+.env
+*.zip
