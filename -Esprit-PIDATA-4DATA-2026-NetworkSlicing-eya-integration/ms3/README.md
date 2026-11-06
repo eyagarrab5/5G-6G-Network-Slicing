@@ -6,7 +6,7 @@ Dashboard pour opérateurs NOC - Agrégation des données de MS-1 et MS-2
 ## 📁 Structure
 - `app.py` - Application Flask principale
 - `models.py` - Modèles Alert et Threshold
-- `dashboard.html` - Interface web
+- `templates/` - Interface web (Flask templates)
 - `service.py` - Service complet avec tous les endpoints
 - `run.py` - Lanceur du service
 - `requirements.txt` - Dépendances
@@ -30,5 +30,5 @@ python app.py
 
 ## 🔗 Intégration
 - Appelle MS-1 (port 5001) pour les prédictions QoS
-- Appelle MS-2 (port 5002) pour la détection d'anomalies
+- Appelle MS-2 (port 5000) pour la détection d'anomalies
 - Base de données MySQL partagée

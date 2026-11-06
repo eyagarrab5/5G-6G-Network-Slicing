@@ -1260,6 +1260,11 @@ def health():
     """Health monitor page"""
     return render_template('health.html')
 
+@app.route('/ms3/health')
+def ms3_health():
+    """MS-3 health check endpoint for Docker"""
+    return jsonify({'status': 'healthy', 'service': 'ms3'}), 200
+
 # ... (existing code)
 @app.route('/api/qos-history')
 def get_qos_history():

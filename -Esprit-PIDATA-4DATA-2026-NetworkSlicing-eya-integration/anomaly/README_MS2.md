@@ -52,7 +52,7 @@ anomalies/
 
 1. **Cloner/Créer le projet**
 ```bash
-cd c:\Users\MSI\Desktop\4eme Data\PI data\anomalies
+cd anomaly
 ```
 
 2. **Créer un environnement virtuel**

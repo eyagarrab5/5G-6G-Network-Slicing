@@ -64,7 +64,8 @@ def start_ms3_service():
     
     try:
         # Import and run the MS-3 service
-        from ms3_dashboard_service import app
+        from app import app, create_tables
+        create_tables()  # Initialize database tables
         app.run(debug=False, host='0.0.0.0', port=5003)
     except KeyboardInterrupt:
         logger.info("MS-3: Service stopped by user")

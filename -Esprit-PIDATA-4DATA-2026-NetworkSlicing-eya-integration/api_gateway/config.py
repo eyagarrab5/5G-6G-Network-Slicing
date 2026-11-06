@@ -25,7 +25,7 @@ class Settings(BaseSettings):
     DB_NAME: str = os.environ.get("DB_NAME", "network_slicing_")
     
     # CORS
-    CORS_ORIGINS: list = ["http://localhost:3000", "http://localhost:8000", "http://127.0.0.1:3000"]
+    CORS_ORIGINS: list = ["http://localhost", "http://localhost:3000", "http://localhost:8000", "http://127.0.0.1:3000", "http://127.0.0.1"]
     
     # Timeouts
     REQUEST_TIMEOUT: float = 30.0

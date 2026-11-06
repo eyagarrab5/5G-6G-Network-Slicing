@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
 
   # Shared MySQL Database
@@ -24,7 +22,7 @@ services:
 
   # MS-1: Prediction Service
   ms1:
-    build: .
+    build: ./ms1
     container_name: ms1_app
     ports:
       - "5001:5001"
