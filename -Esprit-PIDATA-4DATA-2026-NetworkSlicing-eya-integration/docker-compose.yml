@@ -2,26 +2,28 @@ version: '3.8'
 
 services:
 
+  # Shared MySQL Database
   mysql:
     image: mysql:8.0
-    container_name: ms1_mysql
+    container_name: network_slicing_mysql
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: network_slicing
     ports:
       - "3306:3306"
     volumes:
-      - ms1_mysql_data:/var/lib/mysql
+      - mysql_data:/var/lib/mysql
       - ./templates:/app/templates
     networks:
-      - ms1_network
+      - network_slicing_network
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  app:
+  # MS-1: Prediction Service
+  ms1:
     build: .
     container_name: ms1_app
     ports:
@@ -35,12 +37,139 @@ services:
       mysql:
         condition: service_healthy
     networks:
-      - ms1_network
+      - network_slicing_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # MS-2: Anomaly Detection Service
+  ms2:
+    build: ./anomaly
+    container_name: ms2_app
+    ports:
+      - "5000:5000"
+    environment:
+      FLASK_ENV: production
+      FLASK_DEBUG: false
+      FLASK_HOST: 0.0.0.0
+      FLASK_PORT: 5000
+      DATABASE_URL: mysql+pymysql://root:root@mysql:3306/network_slicing
+      SECRET_KEY: production-secret-key-change-this
+    depends_on:
+      mysql:
+        condition: service_healthy
+    volumes:
+      - ./anomaly/models:/app/models
+      - ./anomaly/logs:/app/logs
+    networks:
+      - network_slicing_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/anomaly/stats"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # MS-3: Dashboard & Alerts Service
+  ms3:
+    build: ./ms3
+    container_name: ms3_app
+    ports:
+      - "5003:5003"
+    environment:
+      DB_USER: root
+      DB_PASS: root
+      DB_HOST: mysql
+      DB_NAME: network_slicing
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - network_slicing_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5003/ms3/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # MS-5: Model Management Service
+  ms5:
+    build: ./ms5_model_management
+    container_name: ms5_app
+    ports:
+      - "5005:5005"
+    environment:
+      DB_USER: root
+      DB_PASS: root
+      DB_HOST: mysql
+      DB_NAME: network_slicing
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - network_slicing_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5005/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # FastAPI Gateway
+  api_gateway:
+    build: ./api_gateway
+    container_name: api_gateway
+    ports:
+      - "8000:8000"
+    environment:
+      MS1_URL: http://ms1:5001
+      MS2_URL: http://ms2:5000
+      MS3_URL: http://ms3:5003
+      MS5_URL: http://ms5:5005
+      DB_NAME: network_slicing
+    depends_on:
+      ms1:
+        condition: service_healthy
+      ms2:
+        condition: service_healthy
+      ms3:
+        condition: service_healthy
+      ms5:
+        condition: service_healthy
+    networks:
+      - network_slicing_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # React Frontend
+  frontend:
+    build: ./frontend
+    container_name: frontend
+    ports:
+      - "80:80"
+    depends_on:
+      api_gateway:
+        condition: service_healthy
+    networks:
+      - network_slicing_network
     restart: unless-stopped
 
 volumes:
-  ms1_mysql_data:
+  mysql_data:
 
 networks:
-  ms1_network:
+  network_slicing_network:
     driver: bridge
